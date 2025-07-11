@@ -1,91 +1,161 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>CriptoBattleMaze</title>
+  <title>CriptoBattleMaze - Dungeon</title>
   <style>
     body { background: #111; color: white; font-family: sans-serif; text-align: center; }
     canvas { background: #222; margin-top: 20px; border: 2px solid #444; }
   </style>
 </head>
 <body>
-  <h1>CriptoBattleMaze - Demo v1</h1>
-  <canvas id="game" width="400" height="400"></canvas>
+  <h1>CriptoBattleMaze - Masmorra PvP</h1>
+  <canvas id="game" width="800" height="440"></canvas>
   <div id="info"></div>
+
 <script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-const tile = 20;
+const tile = 40;
 const cols = canvas.width / tile;
 const rows = canvas.height / tile;
 
-let p1 = {x: 1, y: 1, color: 'blue', score: 0};
-let p2 = {x: cols - 2, y: rows - 2, color: 'red', score: 0};
+let p1 = { x: 1, y: 1, color: 'blue', score: 0 };
+let p2 = { x: cols - 2, y: rows - 2, color: 'red', score: 0 };
+let monsters = [{ x: 5, y: 5 }, { x: 10, y: 3 }, { x: 15, y: 7 }];
 let keys = {};
 let coins = [];
+
+const map = [
+// 20 cols × 11 rows → masmorra más compleja
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,1],
+[1,0,1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,1],
+[1,0,1,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,1],
+[1,0,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,0,1],
+[1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1],
+[1,1,1,0,1,1,1,1,0,1,1,1,1,1,1,0,1,1,0,1],
+[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1,0,1],
+[1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,1,0,1,0,1],
+[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
 
 window.addEventListener('keydown', e => keys[e.key] = true);
 window.addEventListener('keyup', e => keys[e.key] = false);
 
-// Generar monedas aleatorias
+// Generar monedas en caminos vacíos
 function generateCoins(n) {
   coins = [];
-  for (let i = 0; i < n; i++) {
-    coins.push({
-      x: Math.floor(Math.random() * cols),
-      y: Math.floor(Math.random() * rows)
-    });
+  let attempts = 0;
+  while (coins.length < n && attempts < 1000) {
+    let x = Math.floor(Math.random() * cols);
+    let y = Math.floor(Math.random() * rows);
+    if (map[y][x] === 0 && !coins.some(c => c.x === x && c.y === y)) {
+      coins.push({ x, y });
+    }
+    attempts++;
   }
 }
-generateCoins(10);
+generateCoins(20);
+
+// Monstruos se mueven cada X segundos
+function moveMonsters() {
+  monsters.forEach(mon => {
+    let dirs = [{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}];
+    let dir = dirs[Math.floor(Math.random() * dirs.length)];
+    let nx = mon.x + dir.x;
+    let ny = mon.y + dir.y;
+    if (map[ny] && map[ny][nx] === 0) {
+      mon.x = nx;
+      mon.y = ny;
+    }
+  });
+}
+setInterval(moveMonsters, 1000);
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Dibujar monedas
+  // Dibujar laberinto
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      if (map[y][x] === 1) {
+        ctx.fillStyle = '#444';
+        ctx.fillRect(x * tile, y * tile, tile, tile);
+      }
+    }
+  }
+
+  // Monedas
   ctx.fillStyle = 'gold';
   coins.forEach(c => {
     ctx.beginPath();
-    ctx.arc(c.x * tile + tile/2, c.y * tile + tile/2, tile/4, 0, Math.PI * 2);
+    ctx.arc(c.x * tile + tile/2, c.y * tile + tile/2, tile/6, 0, Math.PI * 2);
     ctx.fill();
   });
 
-  // Dibujar jugadores
+  // Monstruos
+  ctx.fillStyle = 'green';
+  monsters.forEach(m => {
+    ctx.fillRect(m.x * tile + 10, m.y * tile + 10, tile - 20, tile - 20);
+  });
+
+  // Jugadores
   [p1, p2].forEach(p => {
     ctx.fillStyle = p.color;
     ctx.fillRect(p.x * tile, p.y * tile, tile, tile);
   });
 
-  // Mostrar puntuación
-  document.getElementById("info").innerText = `P1: ${p1.score} puntos | P2: ${p2.score} puntos`;
+  // Puntaje
+  document.getElementById("info").innerText =
+    `P1: ${p1.score} | P2: ${p2.score}`;
+}
+
+function movePlayer(player, dx, dy) {
+  let nx = player.x + dx;
+  let ny = player.y + dy;
+  if (map[ny] && map[ny][nx] === 0) {
+    player.x = nx;
+    player.y = ny;
+  }
 }
 
 function update() {
-  // Movimiento jugador 1
-  if (keys['w']) p1.y = Math.max(0, p1.y - 1);
-  if (keys['s']) p1.y = Math.min(rows - 1, p1.y + 1);
-  if (keys['a']) p1.x = Math.max(0, p1.x - 1);
-  if (keys['d']) p1.x = Math.min(cols - 1, p1.x + 1);
-
-  // Movimiento jugador 2
-  if (keys['ArrowUp']) p2.y = Math.max(0, p2.y - 1);
-  if (keys['ArrowDown']) p2.y = Math.min(rows - 1, p2.y + 1);
-  if (keys['ArrowLeft']) p2.x = Math.max(0, p2.x - 1);
-  if (keys['ArrowRight']) p2.x = Math.min(cols - 1, p2.x + 1);
+  // Movimiento jugadores
+  if (keys['w']) movePlayer(p1, 0, -1);
+  if (keys['s']) movePlayer(p1, 0, 1);
+  if (keys['a']) movePlayer(p1, -1, 0);
+  if (keys['d']) movePlayer(p1, 1, 0);
+  if (keys['ArrowUp']) movePlayer(p2, 0, -1);
+  if (keys['ArrowDown']) movePlayer(p2, 0, 1);
+  if (keys['ArrowLeft']) movePlayer(p2, -1, 0);
+  if (keys['ArrowRight']) movePlayer(p2, 1, 0);
 
   // Recolectar monedas
   [p1, p2].forEach(player => {
     coins = coins.filter(c => {
       if (player.x === c.x && player.y === c.y) {
         player.score++;
-        return false; // eliminar moneda
+        return false;
       }
       return true;
     });
   });
 
-  // Si los jugadores se encuentran
+  // Colisión con monstruos
+  [p1, p2].forEach(player => {
+    monsters.forEach(m => {
+      if (player.x === m.x && player.y === m.y) {
+        alert(`${player.color.toUpperCase()} fue eliminado por un monstruo 🧟`);
+        resetGame();
+      }
+    });
+  });
+
+  // Colisión entre jugadores
   if (p1.x === p2.x && p1.y === p2.y) {
-    alert(`¡Pelea iniciada! Ganador: ${p1.score > p2.score ? 'Jugador 1' : 'Jugador 2'}`);
+    let winner = p1.score > p2.score ? 'Jugador 1 (Azul)' : 'Jugador 2 (Rojo)';
+    alert(`¡Combate activado! Ganador: ${winner}`);
     resetGame();
   }
 }
@@ -93,13 +163,14 @@ function update() {
 function resetGame() {
   p1.x = 1; p1.y = 1; p1.score = 0;
   p2.x = cols - 2; p2.y = rows - 2; p2.score = 0;
-  generateCoins(10);
+  monsters = [{ x: 5, y: 5 }, { x: 10, y: 3 }, { x: 15, y: 7 }];
+  generateCoins(20);
 }
 
 function loop() {
   update();
   draw();
-  setTimeout(() => requestAnimationFrame(loop), 150); // ralentiza un poco el juego
+  setTimeout(() => requestAnimationFrame(loop), 200);
 }
 loop();
 </script>
