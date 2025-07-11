@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CriptoBattleMaze</title>
+  <style>
+    body { background: #111; color: white; font-family: sans-serif; text-align: center; }
+    canvas { background: #222; margin-top: 20px; border: 2px solid #444; }
+  </style>
+</head>
+<body>
+  <h1>CriptoBattleMaze - Demo v1</h1>
+  <canvas id="game" width="400" height="400"></canvas>
+  <div id="info"></div>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const tile = 20;
+const cols = canvas.width / tile;
+const rows = canvas.height / tile;
+
+let p1 = {x: 1, y: 1, color: 'blue', score: 0};
+let p2 = {x: cols - 2, y: rows - 2, color: 'red', score: 0};
+let keys = {};
+let coins = [];
+
+window.addEventListener('keydown', e => keys[e.key] = true);
+window.addEventListener('keyup', e => keys[e.key] = false);
+
+// Generar monedas aleatorias
+function generateCoins(n) {
+  coins = [];
+  for (let i = 0; i < n; i++) {
+    coins.push({
+      x: Math.floor(Math.random() * cols),
+      y: Math.floor(Math.random() * rows)
+    });
+  }
+}
+generateCoins(10);
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Dibujar monedas
+  ctx.fillStyle = 'gold';
+  coins.forEach(c => {
+    ctx.beginPath();
+    ctx.arc(c.x * tile + tile/2, c.y * tile + tile/2, tile/4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Dibujar jugadores
+  [p1, p2].forEach(p => {
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x * tile, p.y * tile, tile, tile);
+  });
+
+  // Mostrar puntuación
+  document.getElementById("info").innerText = `P1: ${p1.score} puntos | P2: ${p2.score} puntos`;
+}
+
+function update() {
+  // Movimiento jugador 1
+  if (keys['w']) p1.y = Math.max(0, p1.y - 1);
+  if (keys['s']) p1.y = Math.min(rows - 1, p1.y + 1);
+  if (keys['a']) p1.x = Math.max(0, p1.x - 1);
+  if (keys['d']) p1.x = Math.min(cols - 1, p1.x + 1);
+
+  // Movimiento jugador 2
+  if (keys['ArrowUp']) p2.y = Math.max(0, p2.y - 1);
+  if (keys['ArrowDown']) p2.y = Math.min(rows - 1, p2.y + 1);
+  if (keys['ArrowLeft']) p2.x = Math.max(0, p2.x - 1);
+  if (keys['ArrowRight']) p2.x = Math.min(cols - 1, p2.x + 1);
+
+  // Recolectar monedas
+  [p1, p2].forEach(player => {
+    coins = coins.filter(c => {
+      if (player.x === c.x && player.y === c.y) {
+        player.score++;
+        return false; // eliminar moneda
+      }
+      return true;
+    });
+  });
+
+  // Si los jugadores se encuentran
+  if (p1.x === p2.x && p1.y === p2.y) {
+    alert(`¡Pelea iniciada! Ganador: ${p1.score > p2.score ? 'Jugador 1' : 'Jugador 2'}`);
+    resetGame();
+  }
+}
+
+function resetGame() {
+  p1.x = 1; p1.y = 1; p1.score = 0;
+  p2.x = cols - 2; p2.y = rows - 2; p2.score = 0;
+  generateCoins(10);
+}
+
+function loop() {
+  update();
+  draw();
+  setTimeout(() => requestAnimationFrame(loop), 150); // ralentiza un poco el juego
+}
+loop();
+</script>
+</body>
+</html>
