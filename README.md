@@ -1,2 +1,0 @@
-# CriptoBattleMaze
-juego_cambat
