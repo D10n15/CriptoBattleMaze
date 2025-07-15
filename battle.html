@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CriptoBattleMaze - Batalla Final</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at center, #1b0033, #000);
+      color: white;
+      font-family: 'Arial';
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+    #result {
+      position: absolute;
+      top: 20px;
+      width: 100%;
+      text-align: center;
+      font-size: 28px;
+      color: gold;
+    }
+  </style>
+</head>
+<body>
+  <div id="result"></div>
+  <canvas id="battleCanvas"></canvas>
+  <script>
+    const canvas = document.getElementById("battleCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const floorY = canvas.height - 120;
+    let frameIndex = 0;
+    let frameTick = 0;
+
+    // Obtener personaje seleccionado desde localStorage
+    const selectedCharacter = localStorage.getItem("selectedCharacter") || "kael";
+
+    const characterSprites = {
+      idle: { path: `../sprites/${selectedCharacter}/quieto.png`, frames: 3 },
+      walk: { path: `../sprites/${selectedCharacter}/caminar_wa.png`, frames: 4 },
+      attack: { path: `../sprites/${selectedCharacter}/atakar_en_salto.png`, frames: 4 },
+      power: { path: `../sprites/${selectedCharacter}/atakar_power.png`, frames: 4 },
+      transform: { path: `../sprites/${selectedCharacter}/transformacion.png`, frames: 3 }
+    };
+
+    class Fighter {
+      constructor(name, x, controls, spriteSet) {
+        this.name = name;
+        this.x = x;
+        this.y = floorY - 100;
+        this.width = 120;
+        this.height = 120;
+        this.health = 100;
+        this.power = 0;
+        this.powerReady = false;
+        this.transformed = false;
+        this.state = "idle";
+        this.controls = controls;
+        this.sprites = spriteSet;
+        this.frameCount = this.sprites.idle.frames;
+        this.sprite = new Image();
+        this.sprite.src = this.sprites.idle.path;
+      }
+
+      draw() {
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.beginPath();
+        ctx.ellipse(this.x + this.width / 2, floorY + 5, 40, 15, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (this.transformed) {
+          ctx.beginPath();
+          ctx.arc(this.x + this.width / 2, this.y + this.height / 2, 60, 0, 2 * Math.PI);
+          ctx.fillStyle = "rgba(255,255,0,0.15)";
+          ctx.fill();
+        }
+
+        const frameWidth = this.sprite.width / this.frameCount;
+        ctx.drawImage(this.sprite,
+                      frameIndex * frameWidth, 0,
+                      frameWidth, this.sprite.height,
+                      this.x, this.y,
+                      this.width, this.height);
+
+        ctx.fillStyle = "red";
+        ctx.fillRect(this.x, this.y - 20, this.health, 10);
+      }
+
+      move(dx) {
+        this.x += dx * 10;
+        this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+      }
+
+      receiveDamage(damage) {
+        this.health -= damage;
+        if (this.health < 0) this.health = 0;
+        this.power += 10;
+        if (this.power >= 100) this.powerReady = true;
+      }
+
+      attack(opponent) {
+        const distance = Math.abs(this.x - opponent.x);
+        if (distance < 130) {
+          const damage = this.transformed ? 30 : 10;
+          opponent.receiveDamage(damage);
+        }
+      }
+
+      usePower(opponent) {
+        if (this.powerReady) {
+          const damage = this.transformed ? 50 : 30;
+          opponent.receiveDamage(damage);
+          this.power = 0;
+          this.powerReady = false;
+        }
+      }
+
+      transform() {
+        if (!this.transformed) this.transformed = true;
+      }
+
+      updateAnimation(state) {
+        if (this.sprite.src !== this.sprites[state].path) {
+          this.sprite.src = this.sprites[state].path;
+          this.frameCount = this.sprites[state].frames;
+          frameIndex = 0;
+        }
+      }
+    }
+
+    const player1 = new Fighter(selectedCharacter, 100, {
+      left: "ArrowLeft", right: "ArrowRight", attack: "z", power: "x", transform: "c"
+    }, characterSprites);
+
+    const player2 = new Fighter("zaraki", canvas.width - 200, {
+      left: "a", right: "d", attack: "f", power: "g", transform: "t"
+    }, {
+      idle: { path: "../sprites/zaraki/idle.png", frames: 1 },
+      walk: { path: "../sprites/zaraki/idle.png", frames: 1 },
+      attack: { path: "../sprites/zaraki/idle.png", frames: 1 },
+      power: { path: "../sprites/zaraki/idle.png", frames: 1 },
+      transform: { path: "../sprites/zaraki/idle.png", frames: 1 }
+    });
+
+    const keys = {};
+    document.addEventListener("keydown", (e) => keys[e.key] = true);
+    document.addEventListener("keyup", (e) => keys[e.key] = false);
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#333";
+      ctx.fillRect(0, floorY, canvas.width, 10);
+
+      frameTick++;
+      if (frameTick % 6 === 0) {
+        frameIndex = (frameIndex + 1) % player1.frameCount;
+      }
+
+      player1.draw();
+      player2.draw();
+
+      // Player 1 actions
+      if (keys[player1.controls.left]) player1.move(-1);
+      if (keys[player1.controls.right]) player1.move(1);
+      if (keys[player1.controls.attack]) player1.attack(player2);
+      if (keys[player1.controls.power]) player1.usePower(player2);
+      if (keys[player1.controls.transform]) player1.transform();
+
+      // Player 2 actions
+      if (keys[player2.controls.left]) player2.move(-1);
+      if (keys[player2.controls.right]) player2.move(1);
+      if (keys[player2.controls.attack]) player2.attack(player1);
+      if (keys[player2.controls.power]) player2.usePower(player1);
+      if (keys[player2.controls.transform]) player2.transform();
+
+      // Actualizar animación de player1
+      if (keys[player1.controls.attack]) {
+        player1.updateAnimation("attack");
+      } else if (keys[player1.controls.power]) {
+        player1.updateAnimation("power");
+      } else if (keys[player1.controls.transform]) {
+        player1.updateAnimation("transform");
+      } else if (keys[player1.controls.left] || keys[player1.controls.right]) {
+        player1.updateAnimation("walk");
+      } else {
+        player1.updateAnimation("idle");
+      }
+
+      if (player1.health <= 0 || player2.health <= 0) {
+        let winner = player1.health <= 0 ? player2.name : player1.name;
+        document.getElementById("result").innerHTML = `🏆 ¡${winner} ha ganado la batalla!`;
+        cancelAnimationFrame(animationId);
+        return;
+      }
+
+      animationId = requestAnimationFrame(draw);
+    }
+
+    let animationId = requestAnimationFrame(draw);
+  </script>
+</body>
+</html>

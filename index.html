@@ -1,178 +1,128 @@
+<!-- Pantalla de selección con historia y aura personalizada -->
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>CriptoBattleMaze - Dungeon</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CriptoBattleMaze - Selección de Personaje</title>
+  <link rel="stylesheet" href="css/styles.css">
   <style>
-    body { background: #111; color: white; font-family: sans-serif; text-align: center; }
-    canvas { background: #222; margin-top: 20px; border: 2px solid #444; }
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: 'Arial';
+      text-align: center;
+    }
+    .character-card {
+      display: inline-block;
+      width: 180px;
+      margin: 15px;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #fff;
+      cursor: pointer;
+    }
+    .character-card img {
+      width: 100px;
+      height: 100px;
+    }
+    #bio {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 15px;
+      border: 2px solid #444;
+      border-radius: 10px;
+      background-color: #111;
+    }
+    #fight-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
-  <h1>CriptoBattleMaze - Masmorra PvP</h1>
-  <canvas id="game" width="800" height="440"></canvas>
-  <div id="info"></div>
+  <h1>Elige tu Guerrero</h1>
+  <div id="characters">
+    <!-- Personajes cargados dinámicamente -->
+  </div>
+  <div id="bio">
+    <h2 id="char-name">Selecciona un personaje</h2>
+    <p id="char-desc"></p>
+  </div>
+  <button id="fight-btn" disabled onclick="goToBattle()">¡Luchar!</button>
 
-<script>
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const tile = 40;
-const cols = canvas.width / tile;
-const rows = canvas.height / tile;
-
-let p1 = { x: 1, y: 1, color: 'blue', score: 0 };
-let p2 = { x: cols - 2, y: rows - 2, color: 'red', score: 0 };
-let monsters = [{ x: 5, y: 5 }, { x: 10, y: 3 }, { x: 15, y: 7 }];
-let keys = {};
-let coins = [];
-
-const map = [
-// 20 cols × 11 rows → masmorra más compleja
-[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,1],
-[1,0,1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,1],
-[1,0,1,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,1],
-[1,0,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,0,1],
-[1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1],
-[1,1,1,0,1,1,1,1,0,1,1,1,1,1,1,0,1,1,0,1],
-[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1,0,1],
-[1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,1,0,1,0,1],
-[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1],
-[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-];
-
-window.addEventListener('keydown', e => keys[e.key] = true);
-window.addEventListener('keyup', e => keys[e.key] = false);
-
-// Generar monedas en caminos vacíos
-function generateCoins(n) {
-  coins = [];
-  let attempts = 0;
-  while (coins.length < n && attempts < 1000) {
-    let x = Math.floor(Math.random() * cols);
-    let y = Math.floor(Math.random() * rows);
-    if (map[y][x] === 0 && !coins.some(c => c.x === x && c.y === y)) {
-      coins.push({ x, y });
-    }
-    attempts++;
-  }
-}
-generateCoins(20);
-
-// Monstruos se mueven cada X segundos
-function moveMonsters() {
-  monsters.forEach(mon => {
-    let dirs = [{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}];
-    let dir = dirs[Math.floor(Math.random() * dirs.length)];
-    let nx = mon.x + dir.x;
-    let ny = mon.y + dir.y;
-    if (map[ny] && map[ny][nx] === 0) {
-      mon.x = nx;
-      mon.y = ny;
-    }
-  });
-}
-setInterval(moveMonsters, 1000);
-
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Dibujar laberinto
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      if (map[y][x] === 1) {
-        ctx.fillStyle = '#444';
-        ctx.fillRect(x * tile, y * tile, tile, tile);
+  <script src="js/selection.js"></script>
+  <script>
+    const characters = {
+      kenshiro: {
+        name: "Kenshiro – El Guerrero del Laberinto",
+        desc: "Un ex-samurái digital que fue desterrado al metaverso por rebelarse contra los dioses del código. Busca redención venciendo a los guerreros más fuertes del multiverso.",
+        aura: "sprites/kenshiro_idle.png"
+      },
+      raijin: {
+        name: "Rai’Jin – Señor de la Cripta",
+        desc: "Antiguo dios del trueno caído en desgracia. Renació en la red oscura y ahora lanza rayos de energía oscura. Su poder es inmenso, pero inestable.",
+        aura: "sprites/raijin_idle.png"
+      },
+      akira: {
+        name: "Akira – La Sombra Carmesí",
+        desc: "Una asesina legendaria que viaja entre dimensiones. Su velocidad es tal que muchos no ven su primer golpe. Pelea por venganza y libertad.",
+        aura: "sprites/akira_idle.png"
+      },
+      zaraki: {
+        name: "Zaraki – El Loco de Sangre",
+        desc: "Un guerrero sin alma nacido del código corrupto. Lucha por el placer de la destrucción. Cuanto más herido está, más salvaje se vuelve.",
+        aura: "sprites/zaraki/zaraki_idle.png"
+      },
+      yume: {
+        name: "Yume – Guardiana Celestial",
+        desc: "Descendiente de los antiguos protectores del balance universal. Lucha con gracia y luz para purgar la oscuridad del laberinto y devolver el equilibrio.",
+        aura: "sprites/yume_idle.png"
+      },
+      kaoru: {
+        name: "Kaoru – Ninja de Fuego",
+        desc: "El último de un clan oculto que controla las llamas a voluntad. Kaoru usa su agilidad y fuego para purificar los portales oscuros que conectan los laberintos.",
+        aura: "sprites/kaoru_idle.png"
+      },
+      kael:{
+        name: "kael – el monarca de la sombra",
+        desc: "Un antiguo rey que fue traicionado y asesinado. Resurgió como un espectro oscuro, buscando venganza contra aquellos que destruyeron su reino.",
+        aura: "sprites/kael/kael.png"
       }
+      
+    };
+
+    const charContainer = document.getElementById('characters');
+    const bio = document.getElementById('bio');
+    const nameEl = document.getElementById('char-name');
+    const descEl = document.getElementById('char-desc');
+    const fightBtn = document.getElementById('fight-btn');
+    let selected = null;
+
+    for (const key in characters) {
+      const char = characters[key];
+      const div = document.createElement('div');
+      div.className = 'character-card';
+      div.style.backgroundColor = '#222';
+      div.innerHTML = `<img src="${char.aura}" alt="${key}"><br><strong>${char.name.split(' – ')[0]}</strong>`;
+      div.onclick = () => {
+        nameEl.textContent = char.name;
+        descEl.textContent = char.desc;
+        selected = key;
+        fightBtn.disabled = false;
+      };
+      charContainer.appendChild(div);
     }
-  }
 
-  // Monedas
-  ctx.fillStyle = 'gold';
-  coins.forEach(c => {
-    ctx.beginPath();
-    ctx.arc(c.x * tile + tile/2, c.y * tile + tile/2, tile/6, 0, Math.PI * 2);
-    ctx.fill();
-  });
-
-  // Monstruos
-  ctx.fillStyle = 'green';
-  monsters.forEach(m => {
-    ctx.fillRect(m.x * tile + 10, m.y * tile + 10, tile - 20, tile - 20);
-  });
-
-  // Jugadores
-  [p1, p2].forEach(p => {
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x * tile, p.y * tile, tile, tile);
-  });
-
-  // Puntaje
-  document.getElementById("info").innerText =
-    `P1: ${p1.score} | P2: ${p2.score}`;
+function goToBattle() {
+  localStorage.setItem('selectedCharacter', selected);
+  localStorage.setItem("selectedCharacter", "kael");
+  window.location.href = './laberinto_oro.html';
 }
 
-function movePlayer(player, dx, dy) {
-  let nx = player.x + dx;
-  let ny = player.y + dy;
-  if (map[ny] && map[ny][nx] === 0) {
-    player.x = nx;
-    player.y = ny;
-  }
-}
-
-function update() {
-  // Movimiento jugadores
-  if (keys['w']) movePlayer(p1, 0, -1);
-  if (keys['s']) movePlayer(p1, 0, 1);
-  if (keys['a']) movePlayer(p1, -1, 0);
-  if (keys['d']) movePlayer(p1, 1, 0);
-  if (keys['ArrowUp']) movePlayer(p2, 0, -1);
-  if (keys['ArrowDown']) movePlayer(p2, 0, 1);
-  if (keys['ArrowLeft']) movePlayer(p2, -1, 0);
-  if (keys['ArrowRight']) movePlayer(p2, 1, 0);
-
-  // Recolectar monedas
-  [p1, p2].forEach(player => {
-    coins = coins.filter(c => {
-      if (player.x === c.x && player.y === c.y) {
-        player.score++;
-        return false;
-      }
-      return true;
-    });
-  });
-
-  // Colisión con monstruos
-  [p1, p2].forEach(player => {
-    monsters.forEach(m => {
-      if (player.x === m.x && player.y === m.y) {
-        alert(`${player.color.toUpperCase()} fue eliminado por un monstruo 🧟`);
-        resetGame();
-      }
-    });
-  });
-
-  // Colisión entre jugadores
-  if (p1.x === p2.x && p1.y === p2.y) {
-    let winner = p1.score > p2.score ? 'Jugador 1 (Azul)' : 'Jugador 2 (Rojo)';
-    alert(`¡Combate activado! Ganador: ${winner}`);
-    resetGame();
-  }
-}
-
-function resetGame() {
-  p1.x = 1; p1.y = 1; p1.score = 0;
-  p2.x = cols - 2; p2.y = rows - 2; p2.score = 0;
-  monsters = [{ x: 5, y: 5 }, { x: 10, y: 3 }, { x: 15, y: 7 }];
-  generateCoins(20);
-}
-
-function loop() {
-  update();
-  draw();
-  setTimeout(() => requestAnimationFrame(loop), 200);
-}
-loop();
 </script>
+<script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
+<script src="web3.js"></script>
 </body>
 </html>
