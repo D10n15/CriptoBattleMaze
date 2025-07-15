@@ -4,12 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CriptoBattleMaze - Laberinto de Oro</title>
-  <!-- 🦊 Sección Web3 (arriba a la derecha, por ejemplo) -->
-  <div id="web3-info">
-   <button onclick="connectWallet()" class="connect-wallet-btn">Conectar Wallet</button>
-  <p id="wallet-address">No conectado</p>
-  <p id="wallet-balance"></p>
-  
 
   <style>
     html, body {
@@ -41,6 +35,12 @@
   </div>
 </head>
 <body>
+    <!-- 🦊 Sección Web3 (arriba a la derecha, por ejemplo) -->
+<div id="web3-info">
+   <button onclick="connectWallet()" class="connect-wallet-btn">Conectar Wallet</button>
+  <p id="wallet-address">No conectado</p>
+  <p id="wallet-balance"></p>
+  
 <canvas id="gameCanvas"></canvas>
 <script>
   async function connectWallet() {
