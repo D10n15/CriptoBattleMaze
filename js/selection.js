@@ -1,0 +1,1 @@
+// JS para seleccionar personaje, mostrar historia y pasar al combate
